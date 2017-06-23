@@ -78,21 +78,23 @@ def train():
             'int': tf.FixedLenFeature([], tf.int64)
         })
 
-    record_image = tf.decode_raw(features['image'], tf.float32)
+    record_image = tf.decode_raw(features['image'], tf.uint8)
 
     # Changing the image into this shape helps train and visualize the output by converting it to
     # be organized like an image.
     image = tf.reshape(record_image, [250, 151, 1])
 
+    image_flt32 = tf.cast(image, tf.float32)
+
     #label = tf.cast(features['label'], tf.string)
 
-    int = tf.cast(features['int'], tf.int32)
+    int = tf.cast(features['int'], tf.int64)
 
     min_after_dequeue = 10
     batch_size = 3
     capacity = min_after_dequeue + 3 * batch_size
     with tf.device('/cpu:0'):
-        images, labels = tf.train.shuffle_batch([image, int], batch_size=batch_size, capacity=capacity,
+        images, labels = tf.train.shuffle_batch([image_flt32, int], batch_size=batch_size, capacity=capacity,
                                             min_after_dequeue=min_after_dequeue)
     # Build a Graph that computes the logits predictions from the
     # inference model.
@@ -143,7 +145,6 @@ def train():
 
 
 def main(argv=None):  # pylint: disable=unused-argument
-  cifar10.maybe_download_and_extract()
   if tf.gfile.Exists(FLAGS.train_dir):
     tf.gfile.DeleteRecursively(FLAGS.train_dir)
   tf.gfile.MakeDirs(FLAGS.train_dir)
